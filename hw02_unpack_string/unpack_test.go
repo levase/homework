@@ -43,3 +43,152 @@ func TestUnpackInvalidString(t *testing.T) {
 		})
 	}
 }
+
+func TestUnpackExtended(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "один повторяющийся символ",
+			input:    "a5",
+			expected: "aaaaa",
+		},
+		{
+			name:     "один символ без повторения",
+			input:    "a",
+			expected: "a",
+		},
+		{
+			name:     "несколько разных символов с повторениями",
+			input:    "a2b3c1",
+			expected: "aabbbc",
+		},
+		{
+			name:     "нулевое повторение в начале",
+			input:    "a0bc",
+			expected: "bc",
+		},
+		{
+			name:     "нулевое повторение в середине",
+			input:    "ab0c",
+			expected: "ac",
+		},
+		{
+			name:     "нулевое повторение в конце",
+			input:    "abc0",
+			expected: "ab",
+		},
+		{
+			name:     "несколько нулевых повторений",
+			input:    "a0b0c0",
+			expected: "",
+		},
+		{
+			name:     "unicode символы с повторениями",
+			input:    "🙂2世3界1",
+			expected: "🙂🙂世世世界",
+		},
+		{
+			name:     "экранированная цифра",
+			input:    `a\2b`,
+			expected: "a2b",
+		},
+		{
+			name:     "экранированный обратный слеш",
+			input:    `a\\b`,
+			expected: `a\b`,
+		},
+		{
+			name:     "экранированный слеш с повторением",
+			input:    `a\\3b`,
+			expected: `a\\\b`,
+		},
+		{
+			name:     "несколько экранированных символов",
+			input:    `a\2\3\4b`,
+			expected: "a234b",
+		},
+		{
+			name:     "экранированный символ с повторением",
+			input:    `a\23`,
+			expected: "a222",
+		},
+		{
+			name:     "сложная escape последовательность",
+			input:    `a\\\2b`,
+			expected: `a\2b`,
+		},
+		{
+			name:     "смешанные экранированные и обычные цифры",
+			input:    `a\2b3c\4`,
+			expected: "a2bbbc4",
+		},
+		{
+			name:     "крайний случай: одиночный слеш в конце",
+			input:    `a\`,
+			expected: "a", // ожидается ошибка
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := Unpack(tc.input)
+			if tc.name == "крайний случай: одиночный слеш в конце" {
+				require.Error(t, err)
+				require.True(t, errors.Is(err, ErrInvalidString))
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestUnpackBoundaryCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "escape последовательность в начале",
+			input:    `\abc`,
+			expected: "abc",
+		},
+		{
+			name:     "экранирование обычного символа",
+			input:    `a\bc`,
+			expected: "abc",
+		},
+		{
+			name:     "несколько последовательных escape символов",
+			input:    `a\\\\b`,
+			expected: `a\\b`,
+		},
+		{
+			name:     "пустая строка",
+			input:    "",
+			expected: "",
+		},
+		{
+			name:     "только экранированные символы",
+			input:    `\a\b\c`,
+			expected: "abc",
+		},
+		{
+			name:     "экранирование с нулевым повторением",
+			input:    `a\0b`,
+			expected: "a0b",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := Unpack(tc.input)
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}
