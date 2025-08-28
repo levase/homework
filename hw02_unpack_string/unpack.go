@@ -25,6 +25,10 @@ func Unpack(str string) (string, error) {
 			if i+1 >= len(runes) {
 				return "", ErrInvalidString
 			}
+			// Проверяем, что экранируется только допустимый символ
+			if runes[i+1] != '\\' && !unicode.IsDigit(runes[i+1]) {
+				return "", ErrInvalidString
+			}
 			// Экранированный символ добавляем как есть
 			char := runes[i+1]
 			i += 2

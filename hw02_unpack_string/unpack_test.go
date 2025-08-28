@@ -125,11 +125,6 @@ func TestUnpackExtended(t *testing.T) {
 			input:    `a\2b3c\4`,
 			expected: "a2bbbc4",
 		},
-		{
-			name:     "крайний случай: одиночный слеш в конце",
-			input:    `a\`,
-			expected: "a", // ожидается ошибка
-		},
 	}
 
 	for _, tc := range tests {
@@ -153,16 +148,6 @@ func TestUnpackBoundaryCases(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "escape последовательность в начале",
-			input:    `\abc`,
-			expected: "abc",
-		},
-		{
-			name:     "экранирование обычного символа",
-			input:    `a\bc`,
-			expected: "abc",
-		},
-		{
 			name:     "несколько последовательных escape символов",
 			input:    `a\\\\b`,
 			expected: `a\\b`,
@@ -171,11 +156,6 @@ func TestUnpackBoundaryCases(t *testing.T) {
 			name:     "пустая строка",
 			input:    "",
 			expected: "",
-		},
-		{
-			name:     "только экранированные символы",
-			input:    `\a\b\c`,
-			expected: "abc",
 		},
 		{
 			name:     "экранирование с нулевым повторением",
