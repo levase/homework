@@ -15,57 +15,48 @@ func Unpack(str string) (string, error) {
 		return "", nil
 	}
 
-	runes := []rune(str)
 	var result strings.Builder
-
+	runes := []rune(str)
 	i := 0
+
 	for i < len(runes) {
-		current := runes[i]
-		// Если текущий символ - цифра (это ошибка, цифра должна следовать только после символа)
-		if unicode.IsDigit(current) {
-			return "", ErrInvalidString
-		}
-		// Если текущий символ - обратный слеш (экранирование)
-		if current == '\\' {
-			// Проверка: слеш не может быть последним
+		// Обрабатываем escape-последовательности
+		if runes[i] == '\\' {
 			if i+1 >= len(runes) {
 				return "", ErrInvalidString
 			}
 			// Экранированный символ добавляем как есть
-			escapedChar := runes[i+1]
-			// Проверяем, есть ли после экранированного символа цифра
-			if i+2 < len(runes) && unicode.IsDigit(runes[i+2]) {
-				count, err := strconv.Atoi(string(runes[i+2]))
-				if err != nil {
-					return "", ErrInvalidString
-				}
-				if count > 0 {
-					result.WriteString(strings.Repeat(string(escapedChar), count))
-				}
-				i += 3
+			char := runes[i+1]
+			i += 2
+
+			// Проверяем, есть ли цифра после экранированного символа
+			if i < len(runes) && unicode.IsDigit(runes[i]) {
+				count, _ := strconv.Atoi(string(runes[i]))
+				result.WriteString(strings.Repeat(string(char), count))
+				i++
 			} else {
-				result.WriteRune(escapedChar)
-				i += 2
+				result.WriteRune(char)
 			}
 			continue
 		}
-		// Обычный символ (буква, \n, \t, руна и т.д.)
-		// Проверяем, есть ли следующая цифра (только одна цифра!)
-		if i+1 < len(runes) && unicode.IsDigit(runes[i+1]) {
-			// Разрешены только однозначные цифры (не числа)
-			count, err := strconv.Atoi(string(runes[i+1]))
-			if err != nil {
-				return "", ErrInvalidString
-			}
-			if count > 0 {
-				result.WriteString(strings.Repeat(string(current), count))
-			}
-			// Если count == 0, символ не добавляется
-			i += 2
-		} else {
-			result.WriteRune(current)
+
+		// Если текущий символ - цифра (это ошибка, цифра должна следовать только после символа)
+		if unicode.IsDigit(runes[i]) {
+			return "", ErrInvalidString
+		}
+
+		char := runes[i]
+		i++
+
+		// Проверяем, есть ли цифра после символа
+		if i < len(runes) && unicode.IsDigit(runes[i]) {
+			count, _ := strconv.Atoi(string(runes[i]))
+			result.WriteString(strings.Repeat(string(char), count))
 			i++
+		} else {
+			result.WriteRune(char)
 		}
 	}
+
 	return result.String(), nil
 }
