@@ -14,13 +14,13 @@ type WordFrequency struct {
 
 // removePunctuation очищает текст от знаков препинания, оставляя только буквы, пробелы и разрешенные символы в словах.
 func removePunctuation(text string) string {
-	// Удаляем все, кроме букв, пробелов и разрешенных символов в словах
-	re := regexp.MustCompile(`[^\p{L}\s'’-]`)
-	text = re.ReplaceAllString(text, "")
+	// Удаляем знаки препинания в начале слов
+	reStart := regexp.MustCompile(`(^|\s)\p{P}+`)
+	text = reStart.ReplaceAllString(text, "$1")
 
-	// Убираем одиночные разрешенные символы (которые не между буквами)
-	re = regexp.MustCompile(`(^|\s)['’-]|['’-]($|\s)`)
-	text = re.ReplaceAllString(text, "$1$2")
+	// Удаляем знаки препинания в конце слов
+	reEnd := regexp.MustCompile(`\p{P}+($|\s)`)
+	text = reEnd.ReplaceAllString(text, "$1")
 
 	return text
 }
